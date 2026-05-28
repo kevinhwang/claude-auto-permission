@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "properties": {
+    "thinking": {
+      "type": "string",
+      "description": "Brief step-by-step reasoning."
+    },
+    "shouldBlock": {
+      "type": "boolean",
+      "description": "Whether the action should be blocked (true) or allowed (false)"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Brief explanation of the classification decision"
+    }
+  },
+  "required": ["thinking", "shouldBlock", "reason"]
+}

@@ -1,0 +1,16 @@
+-- case.yaml --
+description: Redirect to project dir allowed with allow_project_write.
+tool: Bash
+expected:
+  combined: allow
+tags: [quick]
+-- tool_input.json --
+{"command":"git log --oneline > output.txt"}
+-- config.txtpb --
+projects {
+  path_patterns: "/**"
+  static_bash_rules {
+    allow_project_write: true
+    use_default_rules {}
+  }
+}

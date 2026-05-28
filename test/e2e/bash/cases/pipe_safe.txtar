@@ -1,0 +1,15 @@
+-- case.yaml --
+description: Pipe between safe commands is allowed.
+tool: Bash
+expected:
+  combined: allow
+tags: [quick]
+-- tool_input.json --
+{"command":"git log --oneline | head -20 | grep fix"}
+-- config.txtpb --
+projects {
+  path_patterns: "/**"
+  static_bash_rules {
+    use_default_rules {}
+  }
+}

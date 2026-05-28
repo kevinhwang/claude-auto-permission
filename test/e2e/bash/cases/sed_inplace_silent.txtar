@@ -1,0 +1,15 @@
+-- case.yaml --
+description: sed -i (in-place edit) falls through — dangerous flag.
+tool: Bash
+expected:
+  combined: silent
+tags: [quick]
+-- tool_input.json --
+{"command":"sed -i 's/foo/bar/g' file.txt"}
+-- config.txtpb --
+projects {
+  path_patterns: "/**"
+  static_bash_rules {
+    use_default_rules {}
+  }
+}

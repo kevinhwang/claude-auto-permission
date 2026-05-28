@@ -1,0 +1,1213 @@
+# proto-file: proto/rules/v1/rules.proto
+# proto-message: rules.v1.RuleSet
+
+# Default built-in command rules for claude-auto-permission.
+# Activated when a project's static_bash_rules.use_default_rules is set.
+
+# ============================================================================
+# Always-safe commands (safe with any arguments)
+# ============================================================================
+
+# Filesystem inspection
+commands {
+  names: ["cat", "head", "tail", "less", "more", "bat"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["ls", "tree", "exa", "eza"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["file", "stat", "du", "df"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: "pwd"
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+
+# Text processing
+commands {
+  names: ["echo", "printf"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["grep", "egrep", "fgrep", "rg", "ag", "ack"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["wc", "uniq", "cut", "tr", "rev", "tac"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["diff", "cmp", "comm", "colordiff", "delta"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["column", "expand", "fold", "fmt", "nl", "paste", "join"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+
+# Search / locate
+commands {
+  names: ["locate", "mdfind"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+
+# macOS utilities
+commands {
+  names: "screencapture"
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+
+# Path utilities
+commands {
+  names: ["basename", "dirname", "realpath", "readlink"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+
+# Checksums
+commands {
+  names: ["md5sum", "sha256sum", "sha1sum", "shasum", "md5"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+
+# Env / identity
+commands {
+  names: "printenv"
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["uname", "hostname"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["id", "whoami", "groups"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["date", "cal"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+
+# Structured data
+commands {
+  names: "jq"
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+
+# Shell builtins / trivial
+commands {
+  names: ["cd", "pushd", "popd", "true", "false", "test"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: "["  # test builtin (parsed as a command by mvdan/sh)
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["which", "whereis", "type", "hash"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["seq", "mktemp", "sleep"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["export", "set"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+
+# System info (read-only)
+commands {
+  names: ["top", "ps", "uptime", "free"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+
+# Build tools
+commands {
+  names: ["agent-bzl", "bazel", "bzl", "mbzl"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: "rustc"
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: "xcodebuild"
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["tsc", "eslint", "prettier"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["black", "isort", "flake8", "mypy", "pylint", "ruff"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: ["gofmt", "goimports"]
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+commands {
+  names: "shellcheck"
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+
+# ============================================================================
+# Flag-checked commands
+# ============================================================================
+
+# sort: -o/--output arg is a write target
+commands {
+  names: "sort"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          flag_arg_check {
+            names: ["-o", "--output"]
+            has_arg: true
+            check { write_check {} }
+          }
+        }
+      }
+    }
+  }
+}
+
+# yq: deny if -i/--in-place present
+commands {
+  names: "yq"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          not {
+            condition {
+              has_flag_matching {
+                pattern { short_chars: "i"  long_prefixes: "--in-place" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# ============================================================================
+# Bare-command-only
+# ============================================================================
+
+commands {
+  names: "env"
+  custom_rules {
+    rules { allow { condition { no_args {} } } }
+  }
+}
+
+# ============================================================================
+# Flag-presence-gated
+# ============================================================================
+
+commands {
+  names: "command"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          has_flag_matching { exact { flags: ["-v", "-V"] } }
+        }
+      }
+    }
+  }
+}
+
+# ============================================================================
+# Subcommand allowlists
+# ============================================================================
+
+commands {
+  names: "gh"
+  custom_rules {
+    # gh auto-allows only read / search / informational shapes per
+    # subcommand. Mutating ops (`gh repo delete`, `gh release upload`,
+    # `gh workflow run`, ...) and the generic `gh api` HTTP escape
+    # hatch fall through to manual prompt.
+    rules {
+      allow {
+        condition {
+          subcommands {
+            # Top-level passthrough: trivially safe / output-only.
+            allowed_with_any_args: [
+              "status", "browse", "search", "version", "help"
+            ]
+            with_rules {
+              names: "auth"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["status"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "pr"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: [
+                          "view", "list", "status", "diff", "checks", "checkout"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "issue"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["view", "list", "status"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "repo"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["view", "list"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "run"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["list", "view", "watch"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "workflow"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["list", "view"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "release"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["view", "list"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "gist"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["view", "list"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "codespace"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["list", "view", "logs", "ports"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "label"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["list"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "project"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["list", "view", "item-list"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "config"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["list", "get"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+commands {
+  names: "cargo"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          subcommands {
+            allowed_with_any_args: [
+              "build", "test", "bench", "run", "check", "clean", "doc",
+              "new", "init", "add", "remove", "fetch", "update", "search",
+              "publish", "install", "uninstall", "fix", "clippy", "fmt",
+              "tree", "version", "metadata"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+commands {
+  names: "npm"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          subcommands {
+            allowed_with_any_args: [
+              "install", "ci", "test", "run", "build", "start", "lint",
+              "list", "ls", "view", "info", "outdated", "audit",
+              "config", "version", "pack", "help", "cache",
+              "init", "publish", "link", "unlink", "prune",
+              "dedupe", "update", "rebuild", "prefix", "root", "bin"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+commands {
+  names: "yarn"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          subcommands {
+            allowed_with_any_args: [
+              "install", "add", "remove", "run", "build", "test", "start",
+              "lint", "list", "info", "outdated", "audit",
+              "config", "version", "pack", "why", "cache",
+              "init", "link", "unlink", "publish", "upgrade",
+              "workspace", "workspaces"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+commands {
+  names: "pnpm"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          subcommands {
+            allowed_with_any_args: [
+              "install", "add", "remove", "run", "build", "test", "start",
+              "lint", "list", "info", "outdated", "audit",
+              "config", "version", "pack", "why", "cache",
+              "store", "fetch", "dedupe", "link", "unlink",
+              "publish", "update", "rebuild"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+commands {
+  names: "bun"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          subcommands {
+            allowed_with_any_args: [
+              "install", "add", "remove", "run", "build", "test", "start",
+              "lint", "pm", "link", "unlink", "update"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+commands {
+  names: ["pip", "pip3"]
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          subcommands {
+            allowed_with_any_args: [
+              "install", "uninstall", "download", "list", "show",
+              "freeze", "check", "config", "cache", "index",
+              "inspect", "search", "wheel", "hash"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+# ============================================================================
+# Path write commands
+# ============================================================================
+
+commands {
+  names: ["cp", "mv", "rm", "mkdir", "touch", "tee"]
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          flag_arg_check {
+            names: ["-t", "--target-directory"]
+            has_arg: true
+            check { write_check {} }
+          }
+        }
+      }
+    }
+    rules {
+      allow {
+        condition {
+          every_positional_passes { check { write_check {} } }
+        }
+      }
+    }
+    require_cwd: true
+  }
+}
+
+# ============================================================================
+# Flag-allowlist commands (find, fd)
+# ============================================================================
+
+commands {
+  names: "find"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          every_flag_matches {
+            allowed_without_args: [
+              "-print", "-print0", "-prune", "-depth", "-empty",
+              "-daystart", "-xdev", "-mount", "-follow", "-noleaf",
+              "-true", "-false",
+              "-readable", "-writable", "-executable",
+              "-not", "-and", "-or"
+            ]
+            allowed_with_args: [
+              "-name", "-iname", "-path", "-ipath",
+              "-wholename", "-iwholename",
+              "-type", "-xtype",
+              "-maxdepth", "-mindepth",
+              "-mtime", "-atime", "-ctime",
+              "-mmin", "-amin", "-cmin",
+              "-newer",
+              "-size", "-perm",
+              "-regex", "-iregex", "-regextype",
+              "-user", "-group", "-uid", "-gid",
+              "-samefile", "-links", "-inum",
+              "-printf"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+commands {
+  names: ["fd", "fdfind"]
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          every_flag_matches {
+            allowed_without_args: [
+              "-H", "--hidden",
+              "-I", "--no-ignore",
+              "--no-ignore-vcs", "--no-ignore-parent",
+              "-s", "--case-sensitive",
+              "-i", "--ignore-case",
+              "-g", "--glob",
+              "-F", "--fixed-strings",
+              "-a", "--absolute-path",
+              "-l", "--list-details",
+              "-L", "--follow",
+              "-p", "--full-path",
+              "-0", "--print0",
+              "--strip-cwd-prefix",
+              "-u", "--unrestricted",
+              "--one-file-system",
+              "--prune",
+              "-q", "--quiet"
+            ]
+            allowed_with_args: [
+              "-d", "--max-depth",
+              "--min-depth",
+              "-t", "--type",
+              "-e", "--extension",
+              "-E", "--exclude",
+              "-c", "--color",
+              "-j", "--threads",
+              "-S", "--size",
+              "--changed-within", "--changed-before",
+              "--max-results",
+              "--base-directory",
+              "--path-separator",
+              "--search-path"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+# ============================================================================
+# git
+# ============================================================================
+
+commands {
+  names: "git"
+  custom_rules {
+    # Global flags that take an argument (so the parser consumes them correctly).
+    rules {
+      allow {
+        condition {
+          flag_arg_check {
+            names: ["-C", "--git-dir", "--work-tree", "--namespace"]
+            has_arg: true
+          }
+        }
+      }
+    }
+    rules {
+      deny {
+        condition {
+          has_flag_matching { exact { flags: ["-c", "--config-env"] } }
+        }
+      }
+    }
+    rules { deny { condition { has_double_dash {} } } }
+    rules {
+      allow {
+        condition {
+          subcommands {
+            # `config` is intentionally excluded: it's a code-execution
+            # vector via `git config alias.x '!shell-cmd'`,
+            # `core.hooksPath`, and other settings that change how
+            # subsequent git invocations behave. Falls through to manual
+            # prompt.
+            allowed_with_any_args: [
+              "status", "log", "diff", "show", "branch", "tag",
+              "stash", "add", "commit", "fetch", "pull", "push",
+              "checkout", "switch", "restore", "merge", "rebase",
+              "remote", "rev-parse", "ls-files", "ls-tree",
+              "blame", "shortlog", "describe", "name-rev",
+              "worktree", "cherry-pick",
+              "clean", "reset", "mv", "rm", "init", "clone"
+            ]
+            # `git submodule add <url>` clones an arbitrary repo into
+            # the working tree, and `git submodule update` runs hooks
+            # from the submodule. `git submodule foreach <cmd>` runs an
+            # arbitrary command per submodule. All arbitrary code
+            # execution. Allow read-only inspection only.
+            with_rules {
+              names: "submodule"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["status", "summary"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# ============================================================================
+# go
+# ============================================================================
+
+commands {
+  names: "go"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          subcommands {
+            allowed_with_any_args: [
+              "build", "test", "vet", "fmt", "mod", "get", "install",
+              "clean", "env", "version", "list", "doc", "work", "tool",
+              "generate"
+            ]
+            with_rules {
+              names: "run"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      every_positional_passes { check { write_check {} } }
+                    }
+                  }
+                }
+                require_cwd: true
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# ============================================================================
+# ssh / tsh
+# ============================================================================
+
+commands {
+  names: "ssh"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          every_flag_matches {
+            allowed_without_args: [
+              "-t", "-n", "-N", "-q", "-v",
+              "-A", "-a", "-4", "-6"
+            ]
+            allowed_with_args: ["-i", "-l", "-p", "-L", "-R"]
+          }
+        }
+      }
+    }
+    rules {
+      allow {
+        condition {
+          every_positional_passes { check { ssh_remote_eval {} } }
+        }
+      }
+    }
+    support_combined_short_flags: true
+  }
+}
+
+commands {
+  names: "tsh"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          subcommands {
+            allowed_with_any_args: [
+              "version", "status", "ls", "clusters",
+              "resolve", "latency"
+            ]
+            with_rules {
+              names: "ssh"
+              ref_command_spec: "ssh"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# ============================================================================
+# terraform
+# ============================================================================
+
+commands {
+  names: "terraform"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          subcommands {
+            allowed_with_any_args: [
+              "init", "validate", "plan", "fmt", "show", "output",
+              "version", "providers", "graph"
+            ]
+            with_rules {
+              names: ["state", "workspace"]
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["list", "show", "select"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# ============================================================================
+# terragrunt
+# ============================================================================
+
+commands {
+  names: "terragrunt"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          subcommands {
+            # OpenTofu/Terraform pass-through (safe subset, mirrors terraform rules).
+            allowed_with_any_args: [
+              "init", "validate", "plan", "fmt",
+              "show", "output", "version", "providers", "graph"
+            ]
+            # Terragrunt-native read-only / safe commands.
+            allowed_with_any_args: [
+              "catalog", "scaffold", "find", "list", "render"
+            ]
+            with_rules {
+              names: ["state", "workspace"]
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["list", "show", "select"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "stack"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["output", "generate"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "hcl"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["fmt", "validate"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "dag"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands { allowed_with_any_args: "graph" }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "info"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: ["print", "strict"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# ============================================================================
+# aws (curated safe read-only operations)
+# ============================================================================
+
+commands {
+  names: "aws"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          subcommands {
+            with_rules {
+              names: "sts"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: [
+                          "get-caller-identity", "get-session-token",
+                          "get-access-key-info"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "s3"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands { allowed_with_any_args: "ls" }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "s3api"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: [
+                          "list-buckets", "list-objects", "list-objects-v2",
+                          "get-bucket-location", "head-object", "head-bucket"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "ec2"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: [
+                          "describe-instances", "describe-vpcs", "describe-subnets",
+                          "describe-security-groups", "describe-images",
+                          "describe-regions", "describe-availability-zones"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "iam"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: [
+                          "get-user", "get-role", "get-policy",
+                          "list-users", "list-roles", "list-policies",
+                          "list-attached-role-policies", "list-attached-user-policies"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "lambda"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: [
+                          "list-functions", "get-function", "get-function-configuration"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "cloudformation"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: [
+                          "describe-stacks", "list-stacks", "describe-stack-resources",
+                          "validate-template", "get-template"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "logs"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands {
+                        allowed_with_any_args: [
+                          "describe-log-groups", "get-log-events", "filter-log-events"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            with_rules {
+              names: "configure"
+              custom_rules {
+                rules {
+                  allow {
+                    condition {
+                      subcommands { allowed_with_any_args: ["list", "get"] }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# ============================================================================
+# buf / protoc
+# ============================================================================
+
+commands {
+  names: "buf"
+  custom_rules {
+    rules {
+      allow {
+        condition {
+          subcommands {
+            allowed_with_any_args: [
+              "generate", "build", "lint", "format", "breaking",
+              "version", "mod", "dep"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+commands {
+  names: "protoc"
+  custom_rules {
+    rules { always_allow {} }
+  }
+}
+
+# ============================================================================
+# Builtins (marker types — logic implemented in Go)
+# ============================================================================
+
+commands {
+  names: ["sed", "gsed"]
+  sed_checker {}
+}
+
+commands {
+  names: ["awk", "gawk", "mawk", "nawk"]
+  awk_checker {}
+}

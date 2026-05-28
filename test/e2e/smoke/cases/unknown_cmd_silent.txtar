@@ -1,0 +1,15 @@
+-- case.yaml --
+description: Unknown command falls through to CC's normal prompt (silent).
+tool: Bash
+expected:
+  combined: silent
+tags: [quick]
+-- tool_input.json --
+{"command":"some-unknown-binary --do-stuff"}
+-- config.txtpb --
+projects {
+  path_patterns: "/**"
+  static_bash_rules {
+    use_default_rules {}
+  }
+}

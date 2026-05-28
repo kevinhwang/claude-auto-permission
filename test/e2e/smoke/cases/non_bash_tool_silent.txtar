@@ -1,0 +1,15 @@
+-- case.yaml --
+description: Non-Bash tools get silent from the static engine (no opinion).
+tool: Read
+expected:
+  combined: silent
+tags: [quick]
+-- tool_input.json --
+{"file_path":"/etc/passwd"}
+-- config.txtpb --
+projects {
+  path_patterns: "/**"
+  static_bash_rules {
+    use_default_rules {}
+  }
+}

@@ -1,0 +1,171 @@
+edition = "2024";
+package rules.v1;
+
+option go_package = "claude-auto-permission/internal/gen/rules/v1";
+
+// ─── Top-level types ────────────────────────────────────────────────────────
+
+message RuleSet {
+  repeated CommandSpec commands = 1;
+}
+
+message CommandSpec {
+  repeated string names = 1;
+  oneof checker {
+    CustomRules custom_rules = 2;
+    SedChecker sed_checker = 3;
+    AwkChecker awk_checker = 4;
+  }
+}
+
+// Marker types for builtin checkers implemented in Go.
+message SedChecker {}
+message AwkChecker {}
+
+// Config-driven rule checker. Rules are evaluated against the parsed command.
+//
+// For the command to be allowed: ALL rules must pass AND at least one Allow rule must exist.
+//
+//   - An Allow rule passes when its condition is true.
+//   - A Deny rule passes when its condition is false (deny not triggered).
+message CustomRules {
+  repeated Rule rules = 1;
+  // Decompose -abc into -a -b -c. Exact match on the whole token is tried first before decomposing. Only the last char
+  // may have has_arg: true.
+  bool support_combined_short_flags = 2;
+  // Deny if ctx.Cwd is empty (needed for path resolution).
+  bool require_cwd = 3;
+}
+
+message Rule {
+  oneof action {
+    Allow allow = 1;
+    Deny deny = 2;
+    // Convenience: unconditionally allows. Equivalent to: allow { condition { always {} } }
+    AlwaysAllow always_allow = 3;
+    // Convenience: unconditionally denies. Equivalent to: deny { condition { always {} } }
+    AlwaysDeny always_deny = 4;
+  }
+}
+
+message AlwaysAllow {}
+message AlwaysDeny {}
+
+message Allow {
+  Condition condition = 1;
+}
+
+message Deny {
+  Condition condition = 1;
+}
+
+// ─── Conditions ─────────────────────────────────────────────────────────────
+
+message Condition {
+  oneof condition {
+    Always always = 1;
+    Not not = 2;
+    NoArgs no_args = 3;
+    HasDoubleDash has_double_dash = 4;
+    HasFlagMatching has_flag_matching = 5;
+    FlagArgCheck flag_arg_check = 6;
+    EveryFlagMatches every_flag_matches = 7;
+    EveryPositionalPasses every_positional_passes = 8;
+    SubcommandCheck subcommands = 9;
+    MaxPositionals max_positionals = 10;
+  }
+}
+
+// Always true. Used with Allow to explicitly mark a command as safe.
+message Always {}
+
+// Inverts a condition.
+message Not {
+  Condition condition = 1;
+}
+
+// True when the command has no arguments (bare command only).
+message NoArgs {}
+
+// True when the command contains a -- token.
+message HasDoubleDash {}
+
+// True if at least one flag matches the pattern. With Allow: "allow if -v present." With Deny: "deny if -i present."
+message HasFlagMatching {
+  oneof match {
+    ExactFlags exact = 1;
+    PatternFlags pattern = 2;
+  }
+}
+
+// True if the flag is absent OR its argument passes the check. Vacuously true when the flag is not present.
+message FlagArgCheck {
+  repeated string names = 1;
+  bool has_arg = 2;
+  Check check = 3;
+}
+
+// True if every flag in the command is in the allowed set. Unlisted flags cause the condition to fail.
+message EveryFlagMatches {
+  repeated string allowed_without_args = 1;
+  repeated string allowed_with_args = 2;
+}
+
+message ExactFlags {
+  repeated string flags = 1;
+}
+
+message PatternFlags {
+  // Chars to match in combined short flags (e.g., "i" matches -i and -ri).
+  string short_chars = 1;
+  // Prefixes to match long flags (e.g., "--in-place" matches --in-place=.bak).
+  repeated string long_prefixes = 2;
+}
+
+// True if every positional arg passes the check. Vacuously true when no positionals are present.
+message EveryPositionalPasses {
+  Check check = 1;
+}
+
+// True if the first positional matches a subcommand spec.
+message SubcommandCheck {
+  // Subcommands safe with any remaining args.
+  repeated string allowed_with_any_args = 1;
+  // Subcommands with specific conditions on remaining args.
+  repeated SubcommandEntry with_rules = 2;
+}
+
+message SubcommandEntry {
+  // One entry can apply to multiple subcommands.
+  repeated string names = 1;
+  oneof rules {
+    CustomRules custom_rules = 2;
+    // Name of another top-level CommandSpec whose checker to use.
+    string ref_command_spec = 3;
+  }
+}
+
+// True if at most N positional args are present.
+message MaxPositionals {
+  int32 count = 1;
+}
+
+// ─── Checks (applied to flag arguments or positional arguments) ─────────────
+
+message Check {
+  oneof check {
+    WriteCheck write_check = 1;
+    SshRemoteEval ssh_remote_eval = 2;
+    RecurseEval recurse_eval = 3;
+  }
+}
+
+// Check target via ctx.IsPathAllowed.
+message WriteCheck {}
+
+// SSH remote evaluation. First positional = hostname (looked up via config.MatchRemoteHost). On host capture, consumes
+// ALL remaining args (skipping optional leading --) and evaluates them as the remote command.
+message SshRemoteEval {}
+
+// Join remaining args and evaluate via ctx.Evaluate().
+message RecurseEval {}
