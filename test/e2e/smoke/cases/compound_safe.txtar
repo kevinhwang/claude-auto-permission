@@ -1,0 +1,14 @@
+-- case.yaml --
+description: Compound command with && should be statically allowed when each component is safe.
+tool: Bash
+expected:
+  combined: allow
+-- tool_input.json --
+{"command":"cd dir && git status && cat README.md"}
+-- config.txtpb --
+projects {
+  path_patterns: "/**"
+  static_bash_rules {
+    use_default_rules {}
+  }
+}

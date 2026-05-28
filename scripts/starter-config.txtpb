@@ -1,0 +1,13 @@
+# proto-file: proto/config/v1/config.proto
+# proto-message: config.v1.Config
+
+# (Global) any project:
+# - Can write to /tmp
+# - Will use default approval rules
+projects {
+  path_patterns: "/**"
+  static_bash_rules {
+    allow_write_patterns: "/tmp/**"
+    use_default_rules {}
+  }
+}

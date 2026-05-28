@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="445" viewBox="0 0 1080 445" fill="none">
+  <rect width="1080" height="445" rx="8" fill="#F9F9F7"/>
+
+  <!-- 1. Claude Code agent (entry, gray) -->
+  <rect x="20" y="55" width="170" height="60" rx="6" fill="#E8E8E4"/>
+  <text x="105" y="78" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#9E9E9E">Claude Code agent</text>
+  <text x="105" y="98" text-anchor="middle" font-family="monospace" font-size="11" font-weight="600" fill="#1E1E1E">proposes a tool call</text>
+
+  <!-- arrow into claude-auto-permission -->
+  <path d="M190 85 L235 85" stroke="#757575" stroke-width="2"/>
+  <polygon points="233,80 245,85 233,90" fill="#757575"/>
+  <text x="217" y="78" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#757575">PreToolUse</text>
+
+  <!-- claude-auto-permission group box (dashed, peach) -->
+  <rect x="245" y="40" width="540" height="360" rx="8" fill="none" stroke="#D4A27F" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="265" y="62" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#D4A27F" letter-spacing="1">claude-auto-permission</text>
+
+  <!-- Static Bash decider (green) -->
+  <rect x="280" y="100" width="170" height="80" rx="6" fill="#D4E4D8"/>
+  <text x="365" y="124" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#9E9E9E">when tool = Bash</text>
+  <text x="365" y="148" text-anchor="middle" font-family="monospace" font-size="11" font-weight="600" fill="#1E1E1E">static Bash</text>
+  <text x="365" y="162" text-anchor="middle" font-family="monospace" font-size="11" font-weight="600" fill="#1E1E1E">rules decider</text>
+
+  <!-- Static Bash votes (text labels) -->
+  <text x="465" y="135" text-anchor="start" font-family="monospace" font-size="10" fill="#1E1E1E">— allow</text>
+  <text x="465" y="155" text-anchor="start" font-family="monospace" font-size="10" fill="#9E9E9E">— silent</text>
+
+  <!-- Thin vertical arrow connecting the two deciders to convey ordering -->
+  <path d="M365 180 L365 220" stroke="#B0B0B0" stroke-width="1" stroke-dasharray="3 3"/>
+  <polygon points="361,218 365,228 369,218" fill="#B0B0B0"/>
+  <text x="375" y="206" text-anchor="start" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-style="italic" fill="#9E9E9E">first deny short-circuits</text>
+
+  <!-- LLM classifier (green) -->
+  <rect x="280" y="228" width="170" height="100" rx="6" fill="#D4E4D8"/>
+  <text x="365" y="252" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#9E9E9E">(opt-in)</text>
+  <text x="365" y="268" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9E9E9E">tool req + transcript + env</text>
+  <text x="365" y="294" text-anchor="middle" font-family="monospace" font-size="11" font-weight="600" fill="#1E1E1E">LLM classifier</text>
+  <text x="365" y="308" text-anchor="middle" font-family="monospace" font-size="11" font-weight="600" fill="#1E1E1E">decider</text>
+
+  <!-- LLM classifier votes — primary line + de-emphasized line -->
+  <text x="465" y="255" text-anchor="start" font-family="monospace" font-size="10" fill="#1E1E1E">— allow</text>
+  <text x="465" y="273" text-anchor="start" font-family="monospace" font-size="10" fill="#1E1E1E">— deny</text>
+  <text x="465" y="291" text-anchor="start" font-family="monospace" font-size="10" fill="#1E1E1E">— ask</text>
+  <text x="465" y="312" text-anchor="start" font-family="monospace" font-size="10" fill="#9E9E9E">— silent</text>
+  <text x="465" y="326" text-anchor="start" font-family="monospace" font-size="10" fill="#9E9E9E">— passthrough</text>
+
+  <!-- arrows from votes to combine -->
+  <path d="M535 145 L600 145 L600 200 L625 200" fill="none" stroke="#757575" stroke-width="1.5"/>
+  <path d="M555 290 L600 290 L600 230 L625 230" fill="none" stroke="#757575" stroke-width="1.5"/>
+  <polygon points="623,196 635,200 623,204" fill="#757575"/>
+  <polygon points="623,226 635,230 623,234" fill="#757575"/>
+
+  <!-- Combine box (green) -->
+  <rect x="635" y="180" width="130" height="80" rx="6" fill="#D4E4D8"/>
+  <text x="700" y="204" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9E9E9E">deny &gt; ask &gt;</text>
+  <text x="700" y="217" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9E9E9E">passthrough &gt;</text>
+  <text x="700" y="230" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9E9E9E">allow &gt; silent</text>
+  <text x="700" y="250" text-anchor="middle" font-family="monospace" font-size="11" font-weight="600" fill="#1E1E1E">combine</text>
+
+  <!-- Inference provider call (downward from classifier, round-trip) -->
+  <!-- outgoing arrow -->
+  <path d="M357 328 L357 360" stroke="#757575" stroke-width="2"/>
+  <polygon points="352,358 357,370 362,358" fill="#757575"/>
+  <!-- return arrow -->
+  <path d="M373 370 L373 338" stroke="#757575" stroke-width="2"/>
+  <polygon points="368,340 373,328 378,340" fill="#757575"/>
+  <text x="395" y="352" text-anchor="start" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#9E9E9E">inference call ↔ verdict</text>
+
+  <!-- Provider box (peach terminal) -->
+  <rect x="280" y="372" width="170" height="55" rx="6" fill="#FDF6F2" stroke="#D4A27F" stroke-width="1.5"/>
+  <text x="365" y="392" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#D4A27F">inference provider</text>
+  <text x="365" y="412" text-anchor="middle" font-family="monospace" font-size="11" font-weight="600" fill="#1E1E1E">(e.g., Bedrock)</text>
+
+  <!-- Verdict out of combine -->
+  <path d="M765 220 L820 220" stroke="#757575" stroke-width="2"/>
+  <polygon points="818,215 830,220 818,225" fill="#757575"/>
+
+  <!-- Verdict to Claude Code (peach terminal) -->
+  <rect x="830" y="170" width="230" height="100" rx="6" fill="#FDF6F2" stroke="#D4A27F" stroke-width="1.5"/>
+  <text x="945" y="192" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#D4A27F">verdict to Claude Code</text>
+  <text x="945" y="222" text-anchor="middle" font-family="monospace" font-size="13" font-weight="600" fill="#1E1E1E">allow / deny / ask</text>
+  <text x="945" y="248" text-anchor="middle" font-family="monospace" font-size="11" fill="#9E9E9E">or silent</text>
+
+</svg>

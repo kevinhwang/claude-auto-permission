@@ -1,0 +1,14 @@
+-- case.yaml --
+description: eval always falls through — code injection risk.
+tool: Bash
+expected:
+  combined: silent
+-- tool_input.json --
+{"command":"eval \"echo hello\""}
+-- config.txtpb --
+projects {
+  path_patterns: "/**"
+  static_bash_rules {
+    use_default_rules {}
+  }
+}
