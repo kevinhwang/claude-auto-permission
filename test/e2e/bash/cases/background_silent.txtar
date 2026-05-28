@@ -1,0 +1,14 @@
+-- case.yaml --
+description: Background execution (&) always falls through.
+tool: Bash
+expected:
+  combined: silent
+-- tool_input.json --
+{"command":"sleep 60 &"}
+-- config.txtpb --
+projects {
+  path_patterns: "/**"
+  static_bash_rules {
+    use_default_rules {}
+  }
+}

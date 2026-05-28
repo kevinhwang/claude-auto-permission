@@ -1,0 +1,14 @@
+-- case.yaml --
+description: Simple git status is statically allowed by default rules.
+tool: Bash
+expected:
+  combined: allow
+-- tool_input.json --
+{"command":"git status"}
+-- config.txtpb --
+projects {
+  path_patterns: "/**"
+  static_bash_rules {
+    use_default_rules {}
+  }
+}

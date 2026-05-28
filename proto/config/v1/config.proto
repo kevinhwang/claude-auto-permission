@@ -1,0 +1,225 @@
+edition = "2024";
+package config.v1;
+
+import "buf/validate/validate.proto";
+import "config/v1/options.proto";
+import "rules/v1/rules.proto";
+
+option go_package = "claude-auto-permission/internal/gen/config/v1";
+
+message Config {
+  repeated Project projects = 1;
+  Runtime runtime = 2;
+}
+
+// Process-level knobs not tied to any individual project.
+message Runtime {
+  string cache_dir = 1 [(config.v1.opts) = {
+    description: "Cache root for decisions log, session counters, auto-mode policy cache, classifier dumps."
+    default: "~/.cache/claude-auto-permission"
+    env_var: {}
+    cli_flag: {}
+  }];
+
+  bool dump_llm_classifier = 2 [(config.v1.opts) = {
+    description: "Dump every LLM classifier provider call to <cache_dir>/dumps/ for debugging."
+    env_var: {}
+    cli_flag: {}
+  }];
+
+  // Claude Code's user-tier config directory. Matches Claude Code's own CLAUDE_CONFIG_DIR env var
+  // (https://code.claude.com/docs/en/env-vars).
+  string claude_config_dir = 3 [(config.v1.opts) = {
+    description: "Claude Code user-tier config directory (settings.json, CLAUDE.md, transcripts)."
+    default: "~/.claude"
+    env_var: {name: "CLAUDE_CONFIG_DIR"}
+    cli_flag: {}
+  }];
+
+  // Decision log tail-truncation threshold.
+  int32 decision_log_max_bytes = 4 [
+    (config.v1.opts) = {
+      description: "Max size of the decision log before tail-truncation."
+      default: "52428800" // 50 MiB
+      cli_flag: {}
+    },
+    (buf.validate.field).int32.gte = 0
+  ];
+}
+
+message Project {
+  repeated string path_patterns = 1 [(buf.validate.field).repeated.min_items = 1];
+
+  // Optional. When unset, no Bash commands are auto-approved for this project.
+  StaticBashRules static_bash_rules = 2;
+
+  // Optional. Disabled by default.
+  LlmClassifierConfig llm_classifier = 3;
+}
+
+// StaticBashRules configures the static Bash rule engine — the layer that auto-approves obviously-safe Bash commands
+// without consulting an LLM.
+message StaticBashRules {
+  repeated string allow_write_patterns = 1;
+  bool allow_project_write = 2;
+  repeated RemoteHost remote_hosts = 3;
+
+  // Which command rules to use for this project.
+  oneof command_rules {
+    UseDefaultRules use_default_rules = 4;
+    CustomCommandRules custom_command_rules = 5;
+  }
+}
+
+// Use the compiled-in default rules.
+message UseDefaultRules {}
+
+// User-defined command specs.
+message CustomCommandRules {
+  rules.v1.RuleSet rule_set = 1;
+}
+
+message RemoteHost {
+  repeated string host_patterns = 1;
+  repeated string allow_write_patterns = 2;
+}
+
+// LlmClassifierConfig configures the optional LLM classifier that runs on tool requests the static engine can't decide.
+//
+// To customize what the classifier accepts or blocks, edit `autoMode.{allow, soft_deny, environment}` in your Claude
+// Code settings — the same surface Auto Mode reads.
+message LlmClassifierConfig {
+  // Enables the LLM classifier.
+  bool enabled = 1;
+
+  // ClassifierMode bounds the verdicts the classifier can emit:
+  //
+  //   - FULL_AUTO (default): the classifier both auto-approves aligned calls and blocks dangerous ones — the full
+  //     auto-mode experience.
+  //   - BLOCK_ONLY: the classifier can only deny (or, on backstop/error, ask). A no-block verdict is emitted as no
+  //     opinion, deferring the call to peer deciders (e.g. the static Bash allowlist) and Claude Code's normal flow.
+  //     For cautious users who want the transcript-aware veto without ever handing the classifier approval authority.
+  //
+  // The prompt and model round-trip are identical in both modes; the mode only reinterprets a no-block verdict.
+  enum ClassifierMode {
+    CLASSIFIER_MODE_UNSPECIFIED = 0;
+    CLASSIFIER_MODE_FULL_AUTO = 1;
+    CLASSIFIER_MODE_BLOCK_ONLY = 2;
+  }
+  ClassifierMode mode = 2 [(config.v1.opts) = {default: "CLASSIFIER_MODE_FULL_AUTO"}];
+
+  // Required when enabled.
+  BedrockProvider bedrock = 3 [(buf.validate.field).required = true];
+
+  // Force a Skip verdict on tools that would otherwise be classified (useful for known-safe MCP tools).
+  repeated string always_skip_tools = 4;
+
+  // Force classification on tools the per-tool defaults consider safe.
+  repeated string never_skip_tools = 5;
+
+  // Per-provider-call timeout. Zero disables the timeout.
+  int32 timeout_ms = 6 [
+    (config.v1.opts) = {default: "8000"},
+    (buf.validate.field).int32.gte = 0
+  ];
+
+  // Consecutive blocks before the backstop fires. Zero disables this arm of the backstop.
+  int32 max_consecutive_blocks = 7 [
+    (config.v1.opts) = {default: "3"},
+    (buf.validate.field).int32.gte = 0
+  ];
+
+  // Total blocks per session before the backstop fires. Zero disables this arm of the backstop.
+  int32 max_session_blocks = 8 [
+    (config.v1.opts) = {default: "20"},
+    (buf.validate.field).int32.gte = 0
+  ];
+
+  // TTL for backstop disables. Entries older than this are treated as stale from a previous Claude Code session.
+  int32 backstop_ttl_seconds = 9 [
+    (config.v1.opts) = {
+      default: "1800" // 30 min
+    },
+    (buf.validate.field).int32.gte = 0
+  ];
+
+  // Disk-cache TTL for the resolved auto-mode policy.
+  int32 automode_policy_ttl_seconds = 10 [
+    (config.v1.opts) = {
+      default: "86400" // 24h
+    },
+    (buf.validate.field).int32.gte = 0
+  ];
+
+  // Append per-decision records to the JSONL decision log under <cache_dir>.
+  bool log_decisions = 11;
+
+  // Behavior when the classifier hits an infrastructure failure (provider timeout, parse/read error, prompt build
+  // error):
+  //
+  //   - PASSTHROUGH (default): emit no wire output; Claude Code's normal flow handles the call. Risk: an overly-broad
+  //     `permissions.allow` pattern is what you fall back to.
+  //   - ASK: force a permission prompt regardless of normal flow.
+  //
+  // Backstop trips and per-tool skip-list outcomes are unaffected.
+  enum OnClassifierError {
+    ON_CLASSIFIER_ERROR_UNSPECIFIED = 0;
+    ON_CLASSIFIER_ERROR_PASSTHROUGH = 1;
+    ON_CLASSIFIER_ERROR_ASK = 2;
+  }
+  OnClassifierError on_classifier_error = 12 [(config.v1.opts) = {default: "ON_CLASSIFIER_ERROR_PASSTHROUGH"}];
+}
+
+// BedrockProvider configures the AWS Bedrock classifier provider — the only one supported today.
+//
+// AWS auth and region resolve via the AWS SDK's default chain (env vars, ~/.aws/, IMDS). Override per-classifier by
+// prefixing the hook command in `.claude/settings.json` with `AWS_PROFILE=...` / `AWS_REGION=...`.
+message BedrockProvider {
+  // Bedrock model ID or cross-region inference profile. Defaults to the model Claude Code's official Auto Mode runs
+  // its classifier on.
+  string model_id = 1 [
+    (config.v1.opts) = {default: "global.anthropic.claude-sonnet-4-6"},
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+
+  // Output token cap for the authoritative classifier call (forced tool use, or stage 2 in the two-stage modes). The
+  // default leaves headroom for the model's chain-of-thought to finish and still emit its verdict; too low a cap
+  // truncates the reasoning before the verdict, which reads as an unparseable response.
+  int32 max_tokens = 2 [
+    (config.v1.opts) = {default: "2048"},
+    (buf.validate.field).int32.gte = 1
+  ];
+
+  // TwoStageMode picks the classification strategy. Modes trade latency for reasoning depth, in increasing order:
+  //
+  //   - OFF: single forced-tool-use call, no reasoning.
+  //   - FAST: stage 1 XML only — lower latency, higher false-positive rate.
+  //   - BOTH (default): stage 1 verdict; if "block", escalate to a stage 2 chain-of-thought call for the authoritative
+  //     reason. Matches Claude Code's production default.
+  //   - THINKING: skip stage 1, single chain-of-thought call.
+  enum TwoStageMode {
+    TWO_STAGE_MODE_UNSPECIFIED = 0;
+    TWO_STAGE_MODE_OFF = 1;
+    TWO_STAGE_MODE_FAST = 2;
+    TWO_STAGE_MODE_BOTH = 3;
+    TWO_STAGE_MODE_THINKING = 4;
+  }
+  TwoStageMode two_stage = 3 [(config.v1.opts) = {default: "TWO_STAGE_MODE_BOTH"}];
+
+  // Opt into Bedrock's latency-optimized inference tier. Off by default: the optimized tier has different pricing on
+  // some models, so opt in deliberately. Unsupported models silently fall back to standard.
+  bool latency_optimized = 4;
+
+  // Stage-1 max_tokens budget for TWO_STAGE_MODE_BOTH.
+  int32 stage1_max_tokens_both = 5 [
+    (config.v1.opts) = {default: "64"},
+    (buf.validate.field).int32.gte = 1
+  ];
+
+  // Stage-1 max_tokens budget for TWO_STAGE_MODE_FAST.
+  int32 stage1_max_tokens_fast = 6 [
+    (config.v1.opts) = {default: "256"},
+    (buf.validate.field).int32.gte = 1
+  ];
+}
