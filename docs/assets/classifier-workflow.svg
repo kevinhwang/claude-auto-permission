@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="300" viewBox="0 0 1100 300" fill="none">
+  <rect width="1100" height="300" rx="8" fill="#F9F9F7"/>
+
+  <text x="550" y="22" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#9E9E9E">How a tool call flows through the LLM classifier decider</text>
+
+  <!-- Top row: 6 stages, left to right -->
+
+  <!-- 1. tool call (entry, gray) -->
+  <rect x="15" y="55" width="140" height="70" rx="6" fill="#E8E8E4"/>
+  <text x="85" y="85" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#9E9E9E">from Claude Code</text>
+  <text x="85" y="104" text-anchor="middle" font-family="monospace" font-size="11" font-weight="600" fill="#1E1E1E">tool call</text>
+
+  <path d="M155 90 L175 90" stroke="#757575" stroke-width="2"/>
+  <polygon points="173,85 185,90 173,95" fill="#757575"/>
+
+  <!-- 2. Skip filter (decision, green) — three sub-conditions -->
+  <rect x="185" y="55" width="180" height="70" rx="6" fill="#D4E4D8"/>
+  <text x="275" y="74" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9E9E9E">always-safe tool?</text>
+  <text x="275" y="87" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9E9E9E">permission-mode shortcut?</text>
+  <text x="275" y="100" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9E9E9E">in-scope file op?</text>
+  <text x="275" y="118" text-anchor="middle" font-family="monospace" font-size="11" font-weight="600" fill="#1E1E1E">skip filter</text>
+
+  <path d="M365 90 L385 90" stroke="#757575" stroke-width="2"/>
+  <polygon points="383,85 395,90 383,95" fill="#757575"/>
+  <text x="375" y="83" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#B0B0B0">no</text>
+
+  <!-- 3. Backstop (decision, green) -->
+  <rect x="395" y="55" width="150" height="70" rx="6" fill="#D4E4D8"/>
+  <text x="470" y="83" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#9E9E9E">block streak this</text>
+  <text x="470" y="96" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#9E9E9E">session?</text>
+  <text x="470" y="115" text-anchor="middle" font-family="monospace" font-size="11" font-weight="600" fill="#1E1E1E">backstop check</text>
+
+  <path d="M545 90 L565 90" stroke="#757575" stroke-width="2"/>
+  <polygon points="563,85 575,90 563,95" fill="#757575"/>
+  <text x="555" y="83" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#B0B0B0">no</text>
+
+  <!-- 4. Build prompt (process, green) -->
+  <rect x="575" y="55" width="160" height="70" rx="6" fill="#D4E4D8"/>
+  <text x="655" y="78" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9E9E9E">policy + CLAUDE.md +</text>
+  <text x="655" y="91" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9E9E9E">transcript + tool call</text>
+  <text x="655" y="115" text-anchor="middle" font-family="monospace" font-size="11" font-weight="600" fill="#1E1E1E">build prompt</text>
+
+  <path d="M735 90 L755 90" stroke="#757575" stroke-width="2"/>
+  <polygon points="753,85 765,90 753,95" fill="#757575"/>
+
+  <!-- 5. Inference (process, green) -->
+  <rect x="765" y="55" width="150" height="70" rx="6" fill="#D4E4D8"/>
+  <text x="840" y="83" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#9E9E9E">(e.g., Bedrock)</text>
+  <text x="840" y="108" text-anchor="middle" font-family="monospace" font-size="11" font-weight="600" fill="#1E1E1E">inference</text>
+
+  <path d="M915 90 L935 90" stroke="#757575" stroke-width="2"/>
+  <polygon points="933,85 945,90 933,95" fill="#757575"/>
+
+  <!-- 6. Parse + vote (terminal, peach) — verdict hierarchy -->
+  <rect x="945" y="55" width="145" height="70" rx="6" fill="#FDF6F2" stroke="#D4A27F" stroke-width="1.5"/>
+  <text x="1017" y="74" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#D4A27F">parse verdict,</text>
+  <text x="1017" y="87" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#D4A27F">update counters</text>
+  <text x="1017" y="106" text-anchor="middle" font-family="monospace" font-size="10" font-weight="600" fill="#1E1E1E">allow / deny / ask</text>
+  <text x="1017" y="119" text-anchor="middle" font-family="monospace" font-size="9" fill="#9E9E9E">silent / passthrough</text>
+
+  <!-- Down branches from skip filter and backstop -->
+
+  <!-- skip filter "yes" -->
+  <path d="M275 125 L275 185" stroke="#D4A27F" stroke-width="2"/>
+  <polygon points="270,183 275,195 280,183" fill="#D4A27F"/>
+  <text x="287" y="145" text-anchor="start" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="600" fill="#4A8C5C">yes</text>
+
+  <!-- backstop "yes" -->
+  <path d="M470 125 L470 185" stroke="#D4A27F" stroke-width="2"/>
+  <polygon points="465,183 470,195 475,183" fill="#D4A27F"/>
+  <text x="482" y="145" text-anchor="start" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="600" fill="#4A8C5C">yes</text>
+
+  <!-- short-circuit outcomes (peach) -->
+
+  <!-- vote silent -->
+  <rect x="185" y="195" width="180" height="55" rx="6" fill="#FDF6F2" stroke="#D4A27F" stroke-width="1.5"/>
+  <text x="275" y="215" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#D4A27F">short-circuit</text>
+  <text x="275" y="233" text-anchor="middle" font-family="monospace" font-size="10" font-weight="600" fill="#1E1E1E">vote silent</text>
+  <text x="275" y="246" text-anchor="middle" font-family="monospace" font-size="9" fill="#757575">no LLM call</text>
+
+  <!-- forced ask -->
+  <rect x="395" y="195" width="150" height="55" rx="6" fill="#FDF6F2" stroke="#D4A27F" stroke-width="1.5"/>
+  <text x="470" y="215" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#D4A27F">short-circuit</text>
+  <text x="470" y="233" text-anchor="middle" font-family="monospace" font-size="10" font-weight="600" fill="#1E1E1E">force user prompt</text>
+  <text x="470" y="246" text-anchor="middle" font-family="monospace" font-size="9" fill="#757575">circuit breaker tripped</text>
+
+  <!-- Footer note -->
+  <text x="550" y="280" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9E9E9E">Vote is combined with peer deciders by the orchestrator (deny &gt; ask &gt; passthrough &gt; allow &gt; silent).</text>
+</svg>

@@ -1,0 +1,54 @@
+edition = "2024";
+
+package config.v1;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "claude-auto-permission/internal/gen/config/v1";
+
+// FieldOpts annotates a config schema field with documentation, a string-encoded default, and optional env-var and
+// CLI-flag bindings.
+//
+// `env_var` / `cli_flag` only apply to scalar fields (string, bool, numeric, single enum). Binding a repeated, map,
+// oneof-member, or message field is a startup error from the loader.
+message FieldOpts {
+  // Human-readable description shown in CLI --help. Plain prose, no markup.
+  string description = 1;
+
+  // Default value, string representation, parsed by the loader according to the field's kind.
+  // Empty means no default, use the proto zero value.
+  string default = 2;
+
+  // Bind this field to an env var.
+  EnvVar env_var = 3;
+
+  // Bind this field to a CLI flag.
+  CliFlag cli_flag = 4;
+}
+
+// EnvVar configures the env-var binding for a field.
+//
+// Default name: `CLAUDE_AUTO_PERMISSION_` + UPPER_SNAKE of the field's dotted path. Example: `runtime.cache_dir` →
+// `CLAUDE_AUTO_PERMISSION_RUNTIME_CACHE_DIR`.
+message EnvVar {
+  // Override the derived variable name. Use sparingly — prefer the derived name so the schema stays the source of
+  // truth.
+  string name = 1;
+}
+
+// CliFlag configures the CLI-flag binding for a field.
+//
+// Default name: kebab-case of the field's leaf name (wrapper-message segments excluded).
+// Example: `runtime.cache_dir` → `--cache-dir`. Supply `name` to disambiguate leaf-name collisions.
+message CliFlag {
+  // Override the derived flag name (without the leading "--").
+  string name = 1;
+
+  // Optional single-character shorthand (without the leading "-").
+  string short = 2;
+}
+
+extend google.protobuf.FieldOptions {
+  // 50321 is in the application-defined range (50000-99999) reserved by Google for project-local extensions.
+  FieldOpts opts = 50321;
+}

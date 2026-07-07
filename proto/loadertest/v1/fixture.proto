@@ -1,0 +1,98 @@
+edition = "2024";
+
+package loadertest.v1;
+
+import "config/v1/options.proto";
+
+option go_package = "claude-auto-permission/internal/gen/loadertest/v1";
+
+// Fixture exercises every field kind the loader supports. Used only by internal/config/loader's unit tests.
+message Fixture {
+  Inner inner = 1;
+
+  string str_field = 2 [(config.v1.opts) = {
+    description: "String knob."
+    default: "hello"
+    env_var: {}
+    cli_flag: {}
+  }];
+
+  bool bool_field = 3 [(config.v1.opts) = {
+    description: "Bool knob."
+    default: "true"
+    env_var: {}
+    cli_flag: {}
+  }];
+
+  int32 int32_field = 4 [(config.v1.opts) = {
+    description: "Int32 knob."
+    default: "42"
+    env_var: {}
+    cli_flag: {}
+  }];
+
+  int64 int64_field = 5 [(config.v1.opts) = {
+    description: "Int64 knob."
+    default: "9000000000"
+    env_var: {}
+    cli_flag: {}
+  }];
+
+  float float_field = 6 [(config.v1.opts) = {
+    description: "Float knob."
+    default: "1.5"
+    env_var: {}
+    cli_flag: {}
+  }];
+
+  double double_field = 7 [(config.v1.opts) = {
+    description: "Double knob."
+    default: "2.5"
+    env_var: {}
+    cli_flag: {}
+  }];
+
+  Color enum_field = 8 [(config.v1.opts) = {
+    description: "Enum knob."
+    default: "COLOR_RED"
+    env_var: {}
+    cli_flag: {}
+  }];
+
+  // Override slots: derived names would be ENV_OVERRIDE_DEFAULT_NAME and --override-default-name; the overrides change
+  // them.
+  string override_default_name = 9 [(config.v1.opts) = {
+    description: "Verifies env_var.name and cli_flag.name overrides."
+    env_var: {name: "FIXTURE_CUSTOM_ENV"}
+    cli_flag: {
+      name: "custom-flag"
+      short: "c"
+    }
+  }];
+
+  // Unannotated string — default zero value should pass through.
+  string unannotated = 10;
+}
+
+message Inner {
+  string nested_field = 1 [(config.v1.opts) = {
+    description: "Verifies wrapper-message segments propagate into the env name."
+    default: "nested-default"
+    env_var: {}
+    cli_flag: {}
+  }];
+}
+
+enum Color {
+  COLOR_UNSPECIFIED = 0;
+  COLOR_RED = 1;
+  COLOR_BLUE = 2;
+}
+
+// BadFixture annotates a repeated field, which the loader rejects. Tests use it to assert the rejection path fires.
+message BadFixture {
+  repeated string forbidden = 1 [(config.v1.opts) = {
+    description: "Annotation on a repeated field — must be rejected by Walk."
+    env_var: {}
+  }];
+}

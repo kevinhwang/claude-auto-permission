@@ -1,0 +1,14 @@
+-- case.yaml --
+description: Env var prefix assignment falls through (intentional non-feature).
+tool: Bash
+expected:
+  combined: silent
+-- tool_input.json --
+{"command":"FOO=bar ls"}
+-- config.txtpb --
+projects {
+  path_patterns: "/**"
+  static_bash_rules {
+    use_default_rules {}
+  }
+}
